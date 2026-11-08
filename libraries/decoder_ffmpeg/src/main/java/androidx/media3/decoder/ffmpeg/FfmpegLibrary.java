@@ -152,9 +152,11 @@ public final class FfmpegLibrary {
       case MimeTypes.VIDEO_DOLBY_VISION:
         return "hevc";
       case MimeTypes.VIDEO_VP8:
-        return "vp8";
+        // The FFmpeg build enables the libvpx wrappers (libvpx_vp8/libvpx_vp9);
+        // the native "vp8"/"vp9" decoders are disabled by --disable-everything.
+        return findAvailableDecoder("libvpx_vp8", "vp8");
       case MimeTypes.VIDEO_VP9:
-        return "vp9";
+        return findAvailableDecoder("libvpx_vp9", "vp9");
       // MimeTypes.VIDEO_WEBM ("video/webm") is a container type, not a codec; the actual codec
       // (VP8/VP9) is exposed via its own MIME type, so no mapping is possible here.
       case MimeTypes.VIDEO_MPEG:
@@ -194,6 +196,11 @@ public final class FfmpegLibrary {
       default:
         return null;
     }
+  }
+
+  /** Returns the first codec name registered in FFmpeg, or the fallback so supportsFormat logs a warning. */
+  private static String findAvailableDecoder(String preferred, String fallback) {
+    return ffmpegHasDecoder(preferred) ? preferred : fallback;
   }
 
   private static native String ffmpegGetVersion();
